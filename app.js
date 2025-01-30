@@ -10,76 +10,49 @@ const PORT = 8000;
 // MongoDB connection URL (updated with the database name)
 const mongourl = "mongodb+srv://saravanan:saran2005@cluster0.1d6gi.mongodb.net/Expense-Tracker";
 
-// MongoDB connection
-mongoose
-  .connect(mongourl)
-  .then(() => {
-    console.log("DB Connected");
-    app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("DB connection error:", err);
-  });
-
-const expenseSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  title: { type: String, required: true },
-  amount: { type: Number, required: true, min: 1 },
-});
-
-// Explicitly define the collection name as "Expense-Tracker"
-const Expense = mongoose.model("Expense-Tracker", expenseSchema, "Expense-Tracker");
-
-// Create Expense
 app.post("/api/expenses", async (req, res) => {
   try {
     const { title, amount } = req.body;
 
-    // Validate the input data
-    if (!title || !amount || amount <= 0) {
-      return res.status(400).json({ message: "Valid Title and Amount are required" });
+    if (!title || !amount) {
+      return res.status(400).json({ message: "Title and Amount are required" });
     }
 
-    // Create a new expense record
     const newExpense = new Expense({
       id: uuidv4(),
       title: title,
       amount: amount,
     });
 
-    // Save the new expense to the database
     const savedExpense = await newExpense.save();
     res.status(200).json(savedExpense);
   } catch (error) {
-    res.status(500).json({ message: "Error saving expense", error: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 
-// Get Expense by ID
+
+app.get("/api/expensesAll", async (req, res) => {
+  const expense = await Expense.find({});
+
+  if (expense) {
+      res.status(200).json(expense);
+  }
+});
+
 app.get("/api/expensesbyId/:id", async (req, res) => {
-  try {
     const { id } = req.params;
     const expense = await Expense.findOne({ id });
 
     if (expense) {
-      res.status(200).json(expense);
-    } else {
-      res.status(404).json({ message: "Expense not found" });
+        res.status(200).json(expense);
     }
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching expense", error: error.message });
-  }
 });
 
-// Update Expense
 app.put("/api/expensesUpdate/:id", async (req, res) => {
-  try {
     const { id } = req.params;
     const updates = req.body;
 
-    // Update the expense record
     const updatedExpense = await Expense.findOneAndUpdate(
       { id },
       updates,
@@ -87,27 +60,28 @@ app.put("/api/expensesUpdate/:id", async (req, res) => {
     );
 
     if (updatedExpense) {
-      res.status(200).json(updatedExpense);
-    } else {
-      res.status(404).json({ message: "Expense not found" });
+        res.status(200).json(updatedExpense);
     }
-  } catch (error) {
-    res.status(500).json({ message: "Error updating expense", error: error.message });
-  }
 });
 
-// Delete Expense by ID
+
 app.delete("/api/expensesdeletebyId/:id", async (req, res) => {
-  try {
     const { id } = req.params;
-    const result = await Expense.deleteOne({ id });
+      const result = await Expense.deleteOne({ id });
+  
+      if (result) {
+        res.status(200).json(result);
+      } else {
+        res.status(404).json({ message: "Expense not found" });
+      }
+  });
 
-    if (result.deletedCount > 0) {
-      res.status(200).json({ message: "Expense deleted successfully" });
-    } else {
-      res.status(404).json({ message: "Expense not found" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting expense", error: error.message });
-  }
-});
+  app.delete("/api/expensesdeleteAll", async (req, res) => {
+      const result = await Expense.deleteMany({});
+  
+      if (result) {
+        res.status(200).json(result);
+      } else {
+        res.status(404).json({ message: "Expense not found" });
+      }
+  });
