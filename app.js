@@ -1,14 +1,30 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
-
+const cors = require("cors");
 const app = express();
-app.use(express.json());
+
+app.use(cors())
+app.use(express.json()); 
 
 const PORT = 8000;
 
+
 // MongoDB connection URL (updated with the database name)
 const mongourl = "mongodb+srv://saravanan:saran2005@cluster0.1d6gi.mongodb.net/Expense-Tracker";
+
+mongoose
+  .connect(mongourl)
+  .then(() => {
+    console.log("DB Connected");
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("DB connection error:", err);
+  });
+
 
 app.post("/api/expenses", async (req, res) => {
   try {
